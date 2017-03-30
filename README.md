@@ -16,6 +16,12 @@ It can be used to deploy a Cloudformation stack which serves a static site from 
 
 ## How
 
+### Prerequisites
+
+You'll need the [aws-cli] installed to run the deploy script.
+
+### Usage
+
 Run the deploy script with the domain name you're using for your static site. For example, the domain name you're using is `example.com`, run:
 
 ```sh
@@ -29,3 +35,4 @@ Run the deploy script with the domain name you're using for your static site. Fo
 [AWS::CloudFront::Distribution]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution.html
 [AWS::Route53::HostedZone]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53-hostedzone.html
 [AWS::Route53::RecordSetGroup]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordsetgroup.html
+[aws-cli]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html
