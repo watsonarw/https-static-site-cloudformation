@@ -1,0 +1,103 @@
+Parameters:
+  RootDomainName:
+    Type: String
+    Description: The root domain name for our site, e.g. `example.com`
+
+Resources:
+  SiteS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      BucketName: !Ref RootDomainName
+
+  SiteBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref SiteS3Bucket
+      PolicyDocument:
+        Statement:
+        - Sid: ReadAccess
+          Action: s3:GetObject
+          Effect: Allow
+          Resource: !Join
+            - ""
+            -
+              - "arn:aws:s3:::"
+              - !Ref SiteS3Bucket
+              - "/*"
+          Principal: "*"
+
+  TLSCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName: !Ref RootDomainName
+      SubjectAlternativeNames:
+        - !Join
+          - "."
+          -
+            - "www"
+            - !Ref RootDomainName
+
+  SiteCDN:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Aliases:
+          - !Ref RootDomainName
+        Origins:
+          - Id: S3Bucket
+            DomainName: !GetAtt
+              - SiteS3Bucket
+              - DomainName
+            S3OriginConfig: {}
+        HttpVersion: "http2"
+        ViewerCertificate:
+          AcmCertificateArn: !Ref TLSCertificate
+          SslSupportMethod: "sni-only"
+        DefaultRootObject: "index.html"
+        DefaultCacheBehavior:
+          TargetOriginId: S3Bucket
+          ViewerProtocolPolicy: "redirect-to-https"
+          MaxTTL: 86400
+          ForwardedValues:
+            QueryString: false
+
+  SiteHostedZone:
+    Type: "AWS::Route53::HostedZone"
+    Properties:
+      Name: !Ref RootDomainName
+
+  SiteDNSRecord:
+    Type: "AWS::Route53::RecordSetGroup"
+    Properties:
+      HostedZoneId: !Ref SiteHostedZone
+      RecordSets:
+        - Name: !Ref RootDomainName
+          Type: A
+          AliasTarget:
+            DNSName: !GetAtt
+              - SiteCDN
+              - DomainName
+            HostedZoneId: Z2FDTNDATAQYW2
+        - Name: !Join
+            - "."
+            -
+              - "www"
+              - !Ref RootDomainName
+          Type: CNAME
+          TTL: 600
+          ResourceRecords:
+            - !Ref RootDomainName
+
+Outputs:
+  WebsiteURL:
+    Value: !Join
+      - ""
+      -
+        - "https://"
+        - !Ref RootDomainName
+    Description: URL for the website

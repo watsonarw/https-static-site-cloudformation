@@ -1,0 +1,21 @@
+#!/bin/bash -e
+
+command_exists () {
+  type "$1" &> /dev/null ;
+}
+
+if ! command_exists aws; then
+  echo "You need aws-cli to run this!"
+  echo "For instructions on how to install it, see:"
+  echo "https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html"
+  exit 1
+fi
+
+ROOT_DOMAIN_NAME=$1
+STACK_NAME=$(echo $ROOT_DOMAIN_NAME | sed -E 's/[^a-zA-Z0-9\-]+/-/g')
+
+
+echo "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
+aws cloudformation deploy --stack-name "${STACK_NAME}" --template-file cloudformation/template.yml --parameter-overrides "RootDomainName=${ROOT_DOMAIN_NAME}"
+
+echo "Stack provisioned successfully!"
