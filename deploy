@@ -19,3 +19,6 @@ echo "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
 aws cloudformation deploy --stack-name "${STACK_NAME}" --template-file cloudformation/template.yml --parameter-overrides "RootDomainName=${ROOT_DOMAIN_NAME}"
 
 echo "Stack provisioned successfully!"
+
+echo "Describing Stack"
+aws cloudformation describe-stacks --stack-name "${STACK_NAME}"

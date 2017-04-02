@@ -95,9 +95,21 @@ Resources:
 
 Outputs:
   WebsiteURL:
+    Description: URL for the website
     Value: !Join
       - ""
       -
         - "https://"
         - !Ref RootDomainName
-    Description: URL for the website
+
+  NameServers:
+    Description: DNS NameServers for the site
+    Value: !Join
+      - ", "
+      - !GetAtt
+        - SiteHostedZone
+        - NameServers
+
+  CloudFrontDistributionId:
+    Description: The CloudFront Distribution Id to be used for creating invalidations during deployment
+    Value: !Ref SiteCDN
