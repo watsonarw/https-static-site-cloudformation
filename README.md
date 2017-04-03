@@ -12,20 +12,20 @@ This repository contains a [Cloudformation] template and a script for provisioni
 * [AWS::Route53::HostedZone]
 * [AWS::Route53::RecordSetGroup]
 
-It can be used to deploy a Cloudformation stack which serves a static site from a custom domain with HTTPS.
+It can be used to provision a Cloudformation stack which serves a static site from a custom domain with HTTPS.
 
 ## How
 
 ### Prerequisites
 
-You'll need the [aws-cli] installed to run the deploy script.
+You'll need the [aws-cli] installed to run the provision script.
 
 ### Usage
 
-Run the deploy script with the domain name you're using for your static site. For example, the domain name you're using is `example.com`, run:
+Run the provision script with the domain name you're using for your static site. For example, the domain name you're using is `example.com`, run:
 
 ```sh
-./deploy "example.com"
+./provision "example.com"
 ```
 
 [Cloudformation]: https://aws.amazon.com/cloudformation/
