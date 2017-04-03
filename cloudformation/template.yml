@@ -65,6 +65,27 @@ Resources:
           MaxTTL: 86400
           ForwardedValues:
             QueryString: false
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 400
+            ResponseCode: 400
+            ResponsePagePath: /error.html
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 403
+            ResponseCode: 403
+            ResponsePagePath: /error.html
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: /error.html
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 500
+            ResponseCode: 500
+            ResponsePagePath: /error.html
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 503
+            ResponseCode: 503
+            ResponsePagePath: /error.html
 
   SiteHostedZone:
     Type: "AWS::Route53::HostedZone"
