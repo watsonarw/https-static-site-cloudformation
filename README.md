@@ -14,6 +14,8 @@ This repository contains a [Cloudformation] template and a script for provisioni
 
 It can be used to provision a Cloudformation stack which serves a static site from a custom domain with HTTPS.
 
+For more details on what is this script is, you can read [the blog post I wrote about it](https://watsonarw.com/2017/04/04/https-static-site-hosting-in-s3.htmlmakr)
+
 ## How
 
 ### Prerequisites
