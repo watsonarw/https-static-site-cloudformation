@@ -4,6 +4,10 @@ command_exists () {
   type "$1" &> /dev/null ;
 }
 
+echo_bold() {
+  echo -e "\033[1m$1\033[0m"
+}
+
 get_oai_id () {
   OAI=$1
   echo "$OAI" |
@@ -13,7 +17,7 @@ get_oai_id () {
 }
 
 if ! command_exists aws; then
-  echo "You need aws-cli to run this!"
+  echo_bold "You need aws-cli to run this!"
   echo "For instructions on how to install it, see:"
   echo "https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html"
   exit 1
@@ -22,9 +26,9 @@ fi
 ROOT_DOMAIN_NAME=$1
 STACK_NAME=$(echo $ROOT_DOMAIN_NAME | sed -E 's/[^a-zA-Z0-9\-]+/-/g')
 
-echo "Start provisioning ${ROOT_DOMAIN_NAME}"
+echo_bold "Start provisioning ${ROOT_DOMAIN_NAME}"
 
-echo "Provisioning Cloudfront Origin Access Identity"
+echo_bold "Provisioning Cloudfront Origin Access Identity"
 OAI_COMMENT="${STACK_NAME}-cloudfront-identity"
 
 OAI_CONFIG="CallerReference=${STACK_NAME}-identity,Comment=${OAI_COMMENT}"
@@ -33,10 +37,10 @@ OAI=$(aws cloudfront create-cloud-front-origin-access-identity --cloud-front-ori
 OAI_ID="$(get_oai_id "${OAI}")"
 OAI_LOCATION="origin-access-identity/cloudfront/${OAI_ID}"
 
-echo "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
+echo_bold "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
 aws cloudformation deploy --stack-name "${STACK_NAME}" --template-file cloudformation/template.yml --parameter-overrides "RootDomainName=${ROOT_DOMAIN_NAME}" "OriginAccessIdentity=${OAI_LOCATION}"
 
-echo "Stack provisioned successfully!"
+echo_bold "Stack provisioned successfully!"
 
 echo "Describing Stack"
 aws cloudformation describe-stacks --stack-name "${STACK_NAME}"
