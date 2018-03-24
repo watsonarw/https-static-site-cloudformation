@@ -2,16 +2,15 @@ Parameters:
   RootDomainName:
     Type: String
     Description: The root domain name for our site, e.g. `example.com`
-  OriginAccessIdentity:
+  OriginAccessIdentityComment:
     Default: ""
     Type: String
-    Description: The OriginAccessIdentity used to connect cloudfront to our S3 bucket
+    Description: The comment for the OriginAccessIdentity used to connect cloudfront to our S3 bucket
 
 Resources:
   SiteS3Bucket:
     Type: "AWS::S3::Bucket"
     Properties:
-      AccessControl: PublicRead
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
@@ -26,13 +25,9 @@ Resources:
         - Sid: ReadAccess
           Action: s3:GetObject
           Effect: Allow
-          Resource: !Join
-            - ""
-            -
-              - "arn:aws:s3:::"
-              - !Ref SiteS3Bucket
-              - "/*"
-          Principal: "*"
+          Resource: !Sub "${SiteS3Bucket.Arn}/*"
+          Principal:
+              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
 
   TLSCertificate:
     Type: "AWS::CertificateManager::Certificate"
@@ -44,6 +39,12 @@ Resources:
           -
             - "www"
             - !Ref RootDomainName
+
+  CloudFrontOAI:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref OriginAccessIdentityComment
 
   SiteCDN:
     Type: "AWS::CloudFront::Distribution"
@@ -58,7 +59,7 @@ Resources:
               - SiteS3Bucket
               - DomainName
             S3OriginConfig:
-              OriginAccessIdentity: !Ref OriginAccessIdentity
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
         HttpVersion: "http2"
         ViewerCertificate:
           AcmCertificateArn: !Ref TLSCertificate
