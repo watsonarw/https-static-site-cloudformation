@@ -33,6 +33,7 @@ Resources:
     Type: "AWS::CertificateManager::Certificate"
     Properties:
       DomainName: !Ref RootDomainName
+      ValidationMethod: DNS
       SubjectAlternativeNames:
         - !Join
           - "."
