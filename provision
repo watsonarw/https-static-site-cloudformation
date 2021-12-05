@@ -16,6 +16,7 @@ if ! command_exists aws; then
 fi
 
 ROOT_DOMAIN_NAME=$1
+BUCKET_NAME=$2
 STACK_NAME=$(echo $ROOT_DOMAIN_NAME | sed -E 's/[^a-zA-Z0-9\-]+/-/g')
 
 echo_bold "Start provisioning ${ROOT_DOMAIN_NAME}"
@@ -24,7 +25,13 @@ echo_bold "Provisioning Cloudfront Origin Access Identity"
 OAI_COMMENT="${STACK_NAME}-cloudfront-identity"
 
 echo_bold "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
-aws cloudformation deploy --stack-name "${STACK_NAME}" --template-file cloudformation/template.yml --parameter-overrides "RootDomainName=${ROOT_DOMAIN_NAME}" "OriginAccessIdentityComment=${OAI_COMMENT}"
+aws cloudformation deploy \
+  --stack-name "${STACK_NAME}" \
+  --template-file cloudformation/template.yml \
+  --parameter-overrides \
+    "RootDomainName=${ROOT_DOMAIN_NAME}" \
+    "OriginAccessIdentityComment=${OAI_COMMENT}" \
+    "BucketName=${BUCKET_NAME:-$ROOT_DOMAIN_NAME}"
 
 echo_bold "Stack provisioned successfully!"
 

@@ -2,6 +2,9 @@ Parameters:
   RootDomainName:
     Type: String
     Description: The root domain name for our site, e.g. `example.com`
+  BucketName:
+    Type: String
+    Description: The name for the S3 bucket
   OriginAccessIdentityComment:
     Default: ""
     Type: String

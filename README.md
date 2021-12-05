@@ -17,21 +17,25 @@ It can be used to provision a Cloudformation stack which serves a static site fr
 For more details on what is this script is, you can read [the blog post I wrote about it](https://watsonarw.com/2017/04/04/https-static-site-hosting-in-s3.html)
 
 ## How
+### Synopsis
+
+```sh
+./provision <root-domain-name> [<custom-bucket-name>]
+```
+
 
 ### Prerequisites
 
-You'll need the [aws-cli] installed to run the provision script.
+- You'll need the [aws-cli] installed to run the provision script.
+- You'll need access to the AWS console to validate the TLS certificate.
 
 ### Usage
 
-1) Run the provision script with the domain name you're using for your static site. For example, the domain name you're using is `example.com`, run:
+**Note: You'll have to do some manual steps in the AWS console while the certificate is provisioning**
 
-```sh
-./provision "example.com"
-```
-
-_Note: You will need to follow the steps below to verify the domain for the certificate in order for the script to complete._
-
+1) Run the provision script with the domain name you're using for your static site.
+   - For example, the domain name you're using is `example.com`, run `./provision "example.com"`
+   - You can optionally pass a second argument if you want a custom bucket name., e.g `./provision "example.com" "example.com-bucket"`
 2) Open the AWS console and go to the `Certificate Manager` service
 3) Identify the new certificate that is being provisioned by Cloudformation (the status should be `Pending validation`), and expand the section
 4) In the `Domains` section, you will be able to expand each domain and click the `Create record in Route53` button.
