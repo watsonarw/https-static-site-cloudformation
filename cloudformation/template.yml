@@ -5,10 +5,6 @@ Parameters:
   BucketName:
     Type: String
     Description: The name for the S3 bucket
-  OriginAccessIdentityComment:
-    Default: ""
-    Type: String
-    Description: The comment for the OriginAccessIdentity used to connect cloudfront to our S3 bucket
 
 Resources:
   SiteS3Bucket:
@@ -30,7 +26,10 @@ Resources:
           Effect: Allow
           Resource: !Sub "${SiteS3Bucket.Arn}/*"
           Principal:
-              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
+            Service: cloudfront.amazonaws.com
+          Condition:
+            StringEquals:
+              "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteCDN}"
 
   TLSCertificate:
     Type: "AWS::CertificateManager::Certificate"
@@ -44,11 +43,15 @@ Resources:
             - "www"
             - !Ref RootDomainName
 
-  CloudFrontOAI:
-    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+  SiteOAC:
+    Type: AWS::CloudFront::OriginAccessControl
     Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Ref OriginAccessIdentityComment
+      OriginAccessControlConfig:
+        Name: !Sub "${AWS::StackName}-oac"
+        Description: Access control for S3 bucket
+        SigningBehavior: always
+        SigningProtocol: sigv4
+        OriginAccessControlOriginType: s3
 
   SiteCDN:
     Type: "AWS::CloudFront::Distribution"
@@ -61,9 +64,9 @@ Resources:
           - Id: S3Bucket
             DomainName: !GetAtt
               - SiteS3Bucket
-              - DomainName
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
+              - RegionalDomainName
+            S3OriginConfig: {}
+            OriginAccessControlId: !Ref SiteOAC
         HttpVersion: "http2"
         ViewerCertificate:
           AcmCertificateArn: !Ref TLSCertificate
