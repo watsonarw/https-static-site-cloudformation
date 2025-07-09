@@ -12,6 +12,7 @@ if ! command_exists aws; then
   echo_bold "You need aws-cli to run this!"
   echo "For instructions on how to install it, see:"
   echo "https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html"
+  echo "Hint: You can install it with mise by running mise install"
   exit 1
 fi
 
