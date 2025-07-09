@@ -103,27 +103,31 @@ Resources:
     Properties:
       Name: !Ref RootDomainName
 
-  SiteDNSRecord:
-    Type: "AWS::Route53::RecordSetGroup"
+  SiteARecord:
+    Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId: !Ref SiteHostedZone
-      RecordSets:
-        - Name: !Ref RootDomainName
-          Type: A
-          AliasTarget:
-            DNSName: !GetAtt
-              - SiteCDN
-              - DomainName
-            HostedZoneId: Z2FDTNDATAQYW2
-        - Name: !Join
-            - "."
-            -
-              - "www"
-              - !Ref RootDomainName
-          Type: CNAME
-          TTL: 600
-          ResourceRecords:
-            - !Ref RootDomainName
+      Name: !Ref RootDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt
+          - SiteCDN
+          - DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+
+  SiteWWWRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      HostedZoneId: !Ref SiteHostedZone
+      Name: !Join
+        - "."
+        -
+          - "www"
+          - !Ref RootDomainName
+      Type: CNAME
+      TTL: 600
+      ResourceRecords:
+        - !Ref RootDomainName
 
 Outputs:
   WebsiteURL:
