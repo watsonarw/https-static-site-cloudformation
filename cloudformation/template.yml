@@ -75,9 +75,7 @@ Resources:
         DefaultCacheBehavior:
           TargetOriginId: S3Bucket
           ViewerProtocolPolicy: "redirect-to-https"
-          MaxTTL: 86400
-          ForwardedValues:
-            QueryString: false
+          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
         CustomErrorResponses:
           - ErrorCachingMinTTL: 0
             ErrorCode: 400
