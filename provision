@@ -9,6 +9,7 @@ DNS Hosted Zone will be created.
 
 Options:
   -b, --bucket-name <name>    Specify a custom bucket name.
+  -n, --stack-name <name>     Specify a custom CloudFormation stack name.
   -h, --help                  Display this help message.
 EOF
 }
@@ -45,6 +46,11 @@ parse_arguments() {
     -b | --bucket-name)
       require_argument "$current_arg" "$next_arg"
       BUCKET_NAME="$next_arg"
+      shift
+      ;;
+    -n | --stack-name)
+      require_argument "$current_arg" "$next_arg"
+      STACK_NAME="$next_arg"
       shift
       ;;
     -h | --help)
