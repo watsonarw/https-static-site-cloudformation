@@ -35,13 +35,14 @@ Resources:
     Type: "AWS::CertificateManager::Certificate"
     Properties:
       DomainName: !Ref RootDomainName
-      ValidationMethod: DNS
       SubjectAlternativeNames:
-        - !Join
-          - "."
-          -
-            - "www"
-            - !Ref RootDomainName
+        - !Join [".", ["www", !Ref RootDomainName]]
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref RootDomainName
+          HostedZoneId: !Ref SiteHostedZone
+        - DomainName: !Join [".", ["www", !Ref RootDomainName]]
+          HostedZoneId: !Ref SiteHostedZone
 
   SiteOAC:
     Type: AWS::CloudFront::OriginAccessControl
@@ -62,9 +63,7 @@ Resources:
           - !Ref RootDomainName
         Origins:
           - Id: S3Bucket
-            DomainName: !GetAtt
-              - SiteS3Bucket
-              - RegionalDomainName
+            DomainName: !GetAtt [SiteS3Bucket, RegionalDomainName]
             S3OriginConfig: {}
             OriginAccessControlId: !Ref SiteOAC
         HttpVersion: "http2"
@@ -110,20 +109,14 @@ Resources:
       Name: !Ref RootDomainName
       Type: A
       AliasTarget:
-        DNSName: !GetAtt
-          - SiteCDN
-          - DomainName
+        DNSName: !GetAtt [SiteCDN, DomainName]
         HostedZoneId: Z2FDTNDATAQYW2
 
   SiteWWWRecord:
     Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId: !Ref SiteHostedZone
-      Name: !Join
-        - "."
-        -
-          - "www"
-          - !Ref RootDomainName
+      Name: !Join [".", ["www", !Ref RootDomainName]]
       Type: CNAME
       TTL: 600
       ResourceRecords:
@@ -132,19 +125,11 @@ Resources:
 Outputs:
   WebsiteURL:
     Description: URL for the website
-    Value: !Join
-      - ""
-      -
-        - "https://"
-        - !Ref RootDomainName
+    Value: !Join ["", ["https://", !Ref RootDomainName]]
 
   NameServers:
     Description: DNS NameServers for the site
-    Value: !Join
-      - ", "
-      - !GetAtt
-        - SiteHostedZone
-        - NameServers
+    Value: !Join [", ", !GetAtt [SiteHostedZone, NameServers]]
 
   CloudFrontDistributionId:
     Description: The CloudFront Distribution Id to be used for creating invalidations during deployment

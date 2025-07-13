@@ -37,15 +37,11 @@ For more details on what is this script is, you can read [the blog post I wrote 
    - For example, the domain name you're using is `example.com`, run `./provision "example.com"`
    - _Note: To see more detailed usage instructions, run `./provision` with no arugments_
 2) **Point Your DNS at the Route53 Name Servers**
-   1) While the stack is being created, open up the AWS console and go to Route53
+   - _Note: this needs to be done while the Cloudformation stack is being provisioned in order for the automatic TLS certificate validation to work_
+   1) Open up the AWS console and go to Route53
    2) Find the Hosted Zone that has been created by the script, and find the `NS` type record in the hosted zone - these are your nameservers
    3) Tell your domain registrar to use these name servers for your URL (this is usually done from within your domain registrar's portal)
-3) **Verify domain ownership for the the TLS certificate**
-   1) In the AWS console and go to the `Certificate Manager` service
-   2) Identify the new certificate that is being provisioned by Cloudformation (the status should be `Pending validation`), and expand the section
-   3) In the `Domains` section, you should be able to click the `Create records in Route53` button.
-   4) It can take some time for the DNS record to propogate, but the Certificate should now be able to verify the domain.
-4) **Wait for the script to finish (it might take a while).**
+3) **Wait for the script to finish (it might take a while).**
 
 
 [Cloudformation]: https://aws.amazon.com/cloudformation/
