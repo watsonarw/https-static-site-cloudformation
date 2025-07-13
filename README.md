@@ -20,7 +20,7 @@ For more details on what is this script is, you can read [the blog post I wrote 
 ### Synopsis
 
 ```sh
-./provision <root-domain-name> [<custom-bucket-name>]
+./provision [options] <site-name>
 ```
 
 

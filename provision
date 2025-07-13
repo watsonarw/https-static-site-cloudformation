@@ -4,8 +4,7 @@ usage() {
   cat <<-EOF
 Usage: $0 [options] <site-name>
 
-A script that accepts some inputs and uses them. By default, a new
-DNS Hosted Zone will be created.
+Creates a new AWS CloudFormation stack to provision a static website.
 
 Options:
   -b, --bucket-name <name>    Specify a custom bucket name.
