@@ -13,7 +13,7 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-      BucketName: !Ref RootDomainName
+      BucketName: !Ref BucketName
 
   SiteBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
