@@ -33,14 +33,19 @@ For more details on what is this script is, you can read [the blog post I wrote 
 
 **Note: You'll have to do some manual steps in the AWS console while the certificate is provisioning**
 
-1) Run the provision script with the domain name you're using for your static site.
+1) **Run the provision script with the domain name you're using for your static site.**
    - For example, the domain name you're using is `example.com`, run `./provision "example.com"`
-   - You can optionally pass a second argument if you want a custom bucket name., e.g `./provision "example.com" "example.com-bucket"`
-2) Open the AWS console and go to the `Certificate Manager` service
-3) Identify the new certificate that is being provisioned by Cloudformation (the status should be `Pending validation`), and expand the section
-4) In the `Domains` section, you will be able to expand each domain and click the `Create record in Route53` button.
-5) It can take some time for the DNS record to propogate, but the Certificate should now be able to verify the domain.
-6) Wait for the script to finish (it might take a while).
+   - _Note: To see more detailed usage instructions, run `./provision` with no arugments_
+2) **Point Your DNS at the Route53 Name Servers**
+   1) While the stack is being created, open up the AWS console and go to Route53
+   2) Find the Hosted Zone that has been created by the script, and find the `NS` type record in the hosted zone - these are your nameservers
+   3) Tell your domain registrar to use these name servers for your URL (this is usually done from within your domain registrar's portal)
+3) **Verify domain ownership for the the TLS certificate**
+   1) In the AWS console and go to the `Certificate Manager` service
+   2) Identify the new certificate that is being provisioned by Cloudformation (the status should be `Pending validation`), and expand the section
+   3) In the `Domains` section, you should be able to click the `Create records in Route53` button.
+   4) It can take some time for the DNS record to propogate, but the Certificate should now be able to verify the domain.
+4) **Wait for the script to finish (it might take a while).**
 
 
 [Cloudformation]: https://aws.amazon.com/cloudformation/

@@ -1,36 +1,123 @@
 #!/bin/bash -e
 
+usage() {
+  cat <<-EOF
+Usage: $0 [options] <site-name>
+
+A script that accepts some inputs and uses them. By default, a new
+DNS Hosted Zone will be created.
+
+Options:
+  -b, --bucket-name <name>    Specify a custom bucket name.
+  -h, --help                  Display this help message.
+EOF
+}
+
 command_exists() {
   type "$1" &>/dev/null
 }
 
-echo_bold() {
-  echo -e "\033[1m$1\033[0m"
+check_dependencies() {
+  if ! command_exists aws; then
+    echo "You need aws-cli to run this!"
+    echo "For instructions on how to install it, see:"
+    echo "https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html"
+    echo "Hint: You can install it with mise by running mise install"
+    exit 1
+  fi
 }
 
-if ! command_exists aws; then
-  echo_bold "You need aws-cli to run this!"
-  echo "For instructions on how to install it, see:"
-  echo "https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html"
-  echo "Hint: You can install it with mise by running mise install"
-  exit 1
+require_argument() {
+  local option_name="$1"
+  local option_value="$2"
+  if [[ -z "$option_value" || "$option_value" =~ ^- ]]; then
+    echo "Error: Argument for $option_name is missing or invalid" >&2
+    exit 1
+  fi
+}
+
+parse_arguments() {
+  while [[ "$#" -gt 0 ]]; do
+    local current_arg="$1"
+    local next_arg="${2-}"
+
+    case "$current_arg" in
+    -b | --bucket-name)
+      require_argument "$current_arg" "$next_arg"
+      BUCKET_NAME="$next_arg"
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $current_arg" >&2
+      usage
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$current_arg")
+      ;;
+    esac
+    shift
+  done
+}
+
+deploy_cloudformation_stack() {
+  echo "Start provisioning ${ROOT_DOMAIN_NAME}"
+
+  echo "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
+  aws cloudformation deploy \
+    --stack-name "${STACK_NAME}" \
+    --template-file cloudformation/template.yml \
+    --parameter-overrides \
+    "RootDomainName=${ROOT_DOMAIN_NAME}" \
+    "BucketName=${BUCKET_NAME}"
+
+  echo "Stack provisioned successfully!"
+}
+
+describe_stack() {
+  echo "Describing Stack"
+  aws cloudformation describe-stacks --stack-name "${STACK_NAME}"
+}
+
+display_config() {
+  echo "---- Configuration Summary ---"
+  echo "Root Domain Name:           $ROOT_DOMAIN_NAME"
+  echo "Bucket Name:                ${BUCKET_NAME}"
+  echo "CloudFormation Stack Name:  ${STACK_NAME}"
+  echo "-----------------------------"
+}
+
+set_default_parameters() {
+  : "${STACK_NAME:=$(echo "$ROOT_DOMAIN_NAME" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
+  : "${BUCKET_NAME:=$ROOT_DOMAIN_NAME}"
+}
+
+main() {
+  local BUCKET_NAME=""
+  local STACK_NAME=""
+  local POSITIONAL_ARGS=()
+  check_dependencies
+  parse_arguments "$@"
+
+  local ROOT_DOMAIN_NAME="${POSITIONAL_ARGS[0]}"
+
+  if [[ -z "$ROOT_DOMAIN_NAME" ]]; then
+    echo "Error: Missing required argument: <site-name>" >&2
+    usage
+    exit 1
+  fi
+
+  set_default_parameters
+  display_config
+
+  deploy_cloudformation_stack
+  describe_stack
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
 fi
-
-ROOT_DOMAIN_NAME=$1
-BUCKET_NAME=$2
-STACK_NAME=$(echo $ROOT_DOMAIN_NAME | sed -E 's/[^a-zA-Z0-9\-]+/-/g')
-
-echo_bold "Start provisioning ${ROOT_DOMAIN_NAME}"
-
-echo_bold "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
-aws cloudformation deploy \
-  --stack-name "${STACK_NAME}" \
-  --template-file cloudformation/template.yml \
-  --parameter-overrides \
-  "RootDomainName=${ROOT_DOMAIN_NAME}" \
-  "BucketName=${BUCKET_NAME:-$ROOT_DOMAIN_NAME}"
-
-echo_bold "Stack provisioned successfully!"
-
-echo "Describing Stack"
-aws cloudformation describe-stacks --stack-name "${STACK_NAME}"
