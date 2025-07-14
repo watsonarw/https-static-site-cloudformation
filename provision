@@ -99,7 +99,12 @@ deploy_cloudformation_stack() {
 
 describe_stack() {
   echo "Describing Stack"
-  aws cloudformation describe-stacks --stack-name "${STACK_NAME}"
+  aws cloudformation describe-stacks \
+    --stack-name "${STACK_NAME}" \
+    --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
+    --output text | while read -r key value; do
+    printf "  \033[1m%s:\033[0m %s\n" "$key" "$value"
+  done
 }
 
 display_config() {
