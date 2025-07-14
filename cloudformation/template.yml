@@ -61,6 +61,7 @@ Resources:
         Enabled: true
         Aliases:
           - !Ref RootDomainName
+          - !Join [".", ["www", !Ref RootDomainName]]
         Origins:
           - Id: S3Bucket
             DomainName: !GetAtt [SiteS3Bucket, RegionalDomainName]
