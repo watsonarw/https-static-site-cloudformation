@@ -5,6 +5,13 @@ Parameters:
   BucketName:
     Type: String
     Description: The name for the S3 bucket
+  HostedZoneId:
+    Type: String
+    Description: The ID of an existing Route53 hosted zone to use instead of creating one
+    Default: ""
+
+Conditions:
+  CreateNewHostedZone: !Equals [!Ref HostedZoneId, ""]
 
 Resources:
   SiteS3Bucket:
@@ -40,9 +47,9 @@ Resources:
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName: !Ref RootDomainName
-          HostedZoneId: !Ref SiteHostedZone
+          HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
         - DomainName: !Join [".", ["www", !Ref RootDomainName]]
-          HostedZoneId: !Ref SiteHostedZone
+          HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
 
   SiteOAC:
     Type: AWS::CloudFront::OriginAccessControl
@@ -99,6 +106,7 @@ Resources:
             ResponsePagePath: /error.html
 
   SiteHostedZone:
+    Condition: CreateNewHostedZone
     Type: "AWS::Route53::HostedZone"
     Properties:
       Name: !Ref RootDomainName
@@ -106,7 +114,7 @@ Resources:
   SiteARecord:
     Type: "AWS::Route53::RecordSet"
     Properties:
-      HostedZoneId: !Ref SiteHostedZone
+      HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
       Name: !Ref RootDomainName
       Type: A
       AliasTarget:
@@ -116,7 +124,7 @@ Resources:
   SiteWWWRecord:
     Type: "AWS::Route53::RecordSet"
     Properties:
-      HostedZoneId: !Ref SiteHostedZone
+      HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
       Name: !Join [".", ["www", !Ref RootDomainName]]
       Type: CNAME
       TTL: 600
@@ -129,6 +137,7 @@ Outputs:
     Value: !Join ["", ["https://", !Ref RootDomainName]]
 
   NameServers:
+    Condition: CreateNewHostedZone
     Description: DNS NameServers for the site
     Value: !Join [", ", !GetAtt [SiteHostedZone, NameServers]]
 

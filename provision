@@ -8,6 +8,7 @@ Creates a new AWS CloudFormation stack to provision a static website.
 
 Options:
   -b, --bucket-name <name>    Specify a custom bucket name.
+  -z, --hosted-zone-id <ID>   Use an existing Hosted Zone ID instead of creating one.
   -n, --stack-name <name>     Specify a custom CloudFormation stack name.
   -h, --help                  Display this help message.
 EOF
@@ -47,6 +48,11 @@ parse_arguments() {
       BUCKET_NAME="$next_arg"
       shift
       ;;
+    -z | --hosted-zone-id)
+      require_argument "$current_arg" "$next_arg"
+      HOSTED_ZONE_ID="$next_arg"
+      shift
+      ;;
     -n | --stack-name)
       require_argument "$current_arg" "$next_arg"
       STACK_NAME="$next_arg"
@@ -78,7 +84,8 @@ deploy_cloudformation_stack() {
     --template-file cloudformation/template.yml \
     --parameter-overrides \
     "RootDomainName=${ROOT_DOMAIN_NAME}" \
-    "BucketName=${BUCKET_NAME}"
+    "BucketName=${BUCKET_NAME}" \
+    "HostedZoneId=${HOSTED_ZONE_ID:-}"
 
   echo "Stack provisioned successfully!"
 }
@@ -92,6 +99,7 @@ display_config() {
   echo "---- Configuration Summary ---"
   echo "Root Domain Name:           $ROOT_DOMAIN_NAME"
   echo "Bucket Name:                ${BUCKET_NAME}"
+  echo "Hosted Zone ID:             ${HOSTED_ZONE_ID:-"(to be created)"}"
   echo "CloudFormation Stack Name:  ${STACK_NAME}"
   echo "-----------------------------"
 }
@@ -103,6 +111,7 @@ set_default_parameters() {
 
 main() {
   local BUCKET_NAME=""
+  local HOSTED_ZONE_ID=""
   local STACK_NAME=""
   local POSITIONAL_ARGS=()
   check_dependencies
