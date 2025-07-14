@@ -21,15 +21,15 @@ Resources:
       Bucket: !Ref SiteS3Bucket
       PolicyDocument:
         Statement:
-        - Sid: ReadAccess
-          Action: s3:GetObject
-          Effect: Allow
-          Resource: !Sub "${SiteS3Bucket.Arn}/*"
-          Principal:
-            Service: cloudfront.amazonaws.com
-          Condition:
-            StringEquals:
-              "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteCDN}"
+          - Sid: ReadAccess
+            Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub "${SiteS3Bucket.Arn}/*"
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Condition:
+              StringEquals:
+                "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteCDN}"
 
   TLSCertificate:
     Type: "AWS::CertificateManager::Certificate"
