@@ -8,6 +8,7 @@ Creates a new AWS CloudFormation stack to provision a static website.
 
 Options:
   -b, --bucket-name <name>    Specify a custom bucket name.
+  -s, --subdomain <name>      Specify a subdomain.
   -z, --hosted-zone-id <ID>   Use an existing Hosted Zone ID instead of creating one.
   -n, --stack-name <name>     Specify a custom CloudFormation stack name.
   -h, --help                  Display this help message.
@@ -48,6 +49,11 @@ parse_arguments() {
       BUCKET_NAME="$next_arg"
       shift
       ;;
+    -s | --subdomain)
+      require_argument "$current_arg" "$next_arg"
+      SUBDOMAIN="$next_arg"
+      shift
+      ;;
     -z | --hosted-zone-id)
       require_argument "$current_arg" "$next_arg"
       HOSTED_ZONE_ID="$next_arg"
@@ -85,7 +91,8 @@ deploy_cloudformation_stack() {
     --parameter-overrides \
     "RootDomainName=${ROOT_DOMAIN_NAME}" \
     "BucketName=${BUCKET_NAME}" \
-    "HostedZoneId=${HOSTED_ZONE_ID:-}"
+    "HostedZoneId=${HOSTED_ZONE_ID:-}" \
+    "Subdomain=${SUBDOMAIN:-}"
 
   echo "Stack provisioned successfully!"
 }
@@ -98,6 +105,7 @@ describe_stack() {
 display_config() {
   echo "---- Configuration Summary ---"
   echo "Root Domain Name:           $ROOT_DOMAIN_NAME"
+  echo "Subdomain:                  ${SUBDOMAIN:-"(none)"}"
   echo "Bucket Name:                ${BUCKET_NAME}"
   echo "Hosted Zone ID:             ${HOSTED_ZONE_ID:-"(to be created)"}"
   echo "CloudFormation Stack Name:  ${STACK_NAME}"
@@ -105,12 +113,14 @@ display_config() {
 }
 
 set_default_parameters() {
-  : "${STACK_NAME:=$(echo "$ROOT_DOMAIN_NAME" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
-  : "${BUCKET_NAME:=$ROOT_DOMAIN_NAME}"
+  local full_domain_name="${SUBDOMAIN:+${SUBDOMAIN}.}${ROOT_DOMAIN_NAME}"
+  : "${STACK_NAME:=$(echo "$full_domain_name" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
+  : "${BUCKET_NAME:=$full_domain_name}"
 }
 
 main() {
   local BUCKET_NAME=""
+  local SUBDOMAIN=""
   local HOSTED_ZONE_ID=""
   local STACK_NAME=""
   local POSITIONAL_ARGS=()

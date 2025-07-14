@@ -9,9 +9,15 @@ Parameters:
     Type: String
     Description: The ID of an existing Route53 hosted zone to use instead of creating one
     Default: ""
+  Subdomain:
+    Type: String
+    Description: The subdomain for our site, e.g. "staging" for `staging.example.com`
+    Default: ""
 
 Conditions:
   CreateNewHostedZone: !Equals [!Ref HostedZoneId, ""]
+  HasSubdomain: !Not [!Equals [!Ref Subdomain, ""]]
+  CreateWWWRecord: !Not [!Condition HasSubdomain]
 
 Resources:
   SiteS3Bucket:
@@ -41,15 +47,20 @@ Resources:
   TLSCertificate:
     Type: "AWS::CertificateManager::Certificate"
     Properties:
-      DomainName: !Ref RootDomainName
-      SubjectAlternativeNames:
-        - !Join [".", ["www", !Ref RootDomainName]]
+      DomainName: !If [HasSubdomain, !Join [".", [!Ref Subdomain, !Ref RootDomainName]], !Ref RootDomainName]
+      SubjectAlternativeNames: !If
+        - HasSubdomain
+        - !Ref AWS::NoValue
+        - - !Join [".", ["www", !Ref RootDomainName]]
       ValidationMethod: DNS
-      DomainValidationOptions:
-        - DomainName: !Ref RootDomainName
-          HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
-        - DomainName: !Join [".", ["www", !Ref RootDomainName]]
-          HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+      DomainValidationOptions: !If
+        - HasSubdomain
+        - - DomainName: !Join [".", [!Ref Subdomain, !Ref RootDomainName]]
+            HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+        - - DomainName: !Ref RootDomainName
+            HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+          - DomainName: !Join [".", ["www", !Ref RootDomainName]]
+            HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
 
   SiteOAC:
     Type: AWS::CloudFront::OriginAccessControl
@@ -66,9 +77,11 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-        Aliases:
-          - !Ref RootDomainName
-          - !Join [".", ["www", !Ref RootDomainName]]
+        Aliases: !If
+          - HasSubdomain
+          - - !Join [".", [!Ref Subdomain, !Ref RootDomainName]]
+          - - !Ref RootDomainName
+            - !Join [".", ["www", !Ref RootDomainName]]
         Origins:
           - Id: S3Bucket
             DomainName: !GetAtt [SiteS3Bucket, RegionalDomainName]
@@ -115,13 +128,14 @@ Resources:
     Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
-      Name: !Ref RootDomainName
+      Name: !If [HasSubdomain, !Join [".", [!Ref Subdomain, !Ref RootDomainName]], !Ref RootDomainName]
       Type: A
       AliasTarget:
         DNSName: !GetAtt [SiteCDN, DomainName]
         HostedZoneId: Z2FDTNDATAQYW2
 
   SiteWWWRecord:
+    Condition: CreateWWWRecord
     Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
@@ -134,7 +148,10 @@ Resources:
 Outputs:
   WebsiteURL:
     Description: URL for the website
-    Value: !Join ["", ["https://", !Ref RootDomainName]]
+    Value: !Join
+      - ""
+      - - "https://"
+        - !If [HasSubdomain, !Join [".", [!Ref Subdomain, !Ref RootDomainName]], !Ref RootDomainName]
 
   NameServers:
     Condition: CreateNewHostedZone
