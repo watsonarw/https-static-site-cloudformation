@@ -96,6 +96,9 @@ Resources:
           TargetOriginId: S3Bucket
           ViewerProtocolPolicy: "redirect-to-https"
           CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt ViewerRequestHandler.FunctionARN
         CustomErrorResponses:
           - ErrorCachingMinTTL: 0
             ErrorCode: 400
@@ -117,6 +120,23 @@ Resources:
             ErrorCode: 503
             ResponseCode: 503
             ResponsePagePath: /error.html
+
+  ViewerRequestHandler:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub "${AWS::StackName}-viewer-request-handler"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: "Rewrite URIs ending with / to /index.html"
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          const request = event.request;
+          if (request.uri.endsWith('/')) {
+            request.uri += 'index.html';
+          }
+          return request;
+        }
 
   SiteHostedZone:
     Condition: CreateNewHostedZone
