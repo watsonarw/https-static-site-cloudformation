@@ -35,7 +35,7 @@ For more details on what is this script is, you can read [the blog post I wrote 
 
 1) **Run the provision script with the domain name you're using for your static site.**
    - For example, the domain name you're using is `example.com`, run `./provision "example.com"`
-   - _Note: To see more detailed usage instructions, run `./provision` with no arugments_
+   - _Note: To see more detailed usage instructions, run `./provision --help`_
 2) **Point Your DNS at the Route53 Name Servers**
    - _Note: this needs to be done while the Cloudformation stack is being provisioned in order for the automatic TLS certificate validation to work_
    1) Open up the AWS console and go to Route53
