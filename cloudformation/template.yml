@@ -13,6 +13,11 @@ Parameters:
     Type: String
     Description: The subdomain for our site, e.g. "staging" for `staging.example.com`
     Default: ""
+  EnableCanonicalURIs:
+    Type: String
+    Description: "Enable URI canonicalization that normalizes slashes and redirects extensionless paths to directory format (/about -> /about/) for SEO benefits."
+    Default: "true"
+    AllowedValues: ["true", "false"]
 
 Conditions:
   CreateNewHostedZone: !Equals [!Ref HostedZoneId, ""]
@@ -129,12 +134,34 @@ Resources:
       FunctionConfig:
         Comment: "Rewrite URIs ending with / to /index.html"
         Runtime: cloudfront-js-2.0
-      FunctionCode: |
+      FunctionCode: !Sub |
         function handler(event) {
           const request = event.request;
           if (request.uri.endsWith('/')) {
             request.uri += 'index.html';
+            return request;
           }
+
+          if (${EnableCanonicalURIs}) {
+            const uri = event.request.uri;
+
+            const NO_DOT_IN_LAST_PATH_SEGMENT = /(^(?:.+\/)*[^.]*$)/g;
+            const CONSECUTIVE_SLASHES_ANYWHERE = /\/+/g;
+            const TRAILING_INDEX_HTML = /\/index\.html$/;
+
+            const canonicalizedUri = uri
+              .replace(TRAILING_INDEX_HTML, "/") // Remove trailing index.html if present
+              .replace(NO_DOT_IN_LAST_PATH_SEGMENT, "$1/") // Add trailing slash if it looks like a directory
+              .replace(CONSECUTIVE_SLASHES_ANYWHERE, "/"); // Collapse consecutive slashes
+
+            if (canonicalizedUri !== uri) {
+              return {
+                statusCode: 301,
+                headers: { location: { value: canonicalizedUri } },
+              };
+            }
+          }
+
           return request;
         }
 
