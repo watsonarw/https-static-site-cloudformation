@@ -1,8 +1,17 @@
 #!/usr/bin/env sh
 set -euo pipefail
 
+. "$(dirname "${0}")/lib/load.sh"
+
+BUCKET_NAME=""
+SUBDOMAIN=""
+HOSTED_ZONE_ID=""
+STACK_NAME=""
+POSITIONAL_ARGS=()
+ROOT_DOMAIN_NAME=""
+
 usage() {
-  cat <<-EOF
+  style <<-EOF
 Usage: $0 [options] <site-name>
 
 Creates a new AWS CloudFormation stack to provision a static website.
@@ -16,31 +25,8 @@ Options:
 EOF
 }
 
-command_exists() {
-  type "$1" &>/dev/null
-}
-
-check_dependencies() {
-  if ! command_exists aws; then
-    echo "You need aws-cli to run this!"
-    echo "For instructions on how to install it, see:"
-    echo "https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html"
-    echo "Hint: You can install it with mise by running mise install"
-    exit 1
-  fi
-}
-
-require_argument() {
-  local option_name="$1"
-  local option_value="$2"
-  if [[ -z "$option_value" || "$option_value" =~ ^- ]]; then
-    echo "Error: Argument for $option_name is missing or invalid" >&2
-    exit 1
-  fi
-}
-
 parse_arguments() {
-  while [[ "$#" -gt 0 ]]; do
+  while [ "$#" -gt 0 ]; do
     local current_arg="$1"
     local next_arg="${2-}"
 
@@ -82,8 +68,51 @@ parse_arguments() {
   done
 }
 
+check_dependencies() {
+  if ! command_exists aws; then
+    style red <<-EOF
+You need aws-cli to run this!
+For instructions on how to install it, see:
+https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html
+EOF
+    exit 1
+  fi
+}
+
+set_default_parameters() {
+  FULL_DOMAIN_NAME="${SUBDOMAIN:+${SUBDOMAIN}.}${ROOT_DOMAIN_NAME}"
+  : "${STACK_NAME:=$(echo "$FULL_DOMAIN_NAME" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
+  : "${BUCKET_NAME:=$FULL_DOMAIN_NAME}"
+}
+
+get_config_from_arguments() {
+  parse_arguments "$@"
+
+  ROOT_DOMAIN_NAME="${POSITIONAL_ARGS[0]:-}"
+
+  if [ -z "$ROOT_DOMAIN_NAME" ]; then
+    style red "Error: Missing required argument: <site-name>" >&2
+    usage
+    exit 1
+  fi
+
+  set_default_parameters
+}
+
+print_config() {
+  style <<-EOF
+${BOLD}---- Configuration Summary ---${RESET}
+Root Domain Name:           $ROOT_DOMAIN_NAME
+Subdomain:                  ${SUBDOMAIN:-"${DIM}(none)${RESET}"}
+Bucket Name:                ${BUCKET_NAME}
+Hosted Zone ID:             ${HOSTED_ZONE_ID:-"${DIM}(to be created)${RESET}"}
+CloudFormation Stack Name:  ${STACK_NAME}
+${BOLD}-----------------------------${RESET}
+EOF
+}
+
 deploy_cloudformation_stack() {
-  echo "Start provisioning ${ROOT_DOMAIN_NAME}"
+  style blue "Start provisioning for ${FULL_DOMAIN_NAME}"
 
   echo "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
   aws cloudformation deploy \
@@ -95,59 +124,30 @@ deploy_cloudformation_stack() {
     "HostedZoneId=${HOSTED_ZONE_ID:-}" \
     "Subdomain=${SUBDOMAIN:-}"
 
-  echo "Stack provisioned successfully!"
+  style green "Stack provisioned successfully!"
 }
 
-describe_stack() {
-  echo "Describing Stack"
+display_outputs() {
+  style blue "Stack outputs for ${STACK_NAME}"
   aws cloudformation describe-stacks \
     --stack-name "${STACK_NAME}" \
     --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
     --output text | while read -r key value; do
-    printf "  \033[1m%s:\033[0m %s\n" "$key" "$value"
+    printf "  ${BOLD}%s:${RESET} %s\n" "$key" "$value"
   done
-}
 
-display_config() {
-  echo "---- Configuration Summary ---"
-  echo "Root Domain Name:           $ROOT_DOMAIN_NAME"
-  echo "Subdomain:                  ${SUBDOMAIN:-"(none)"}"
-  echo "Bucket Name:                ${BUCKET_NAME}"
-  echo "Hosted Zone ID:             ${HOSTED_ZONE_ID:-"(to be created)"}"
-  echo "CloudFormation Stack Name:  ${STACK_NAME}"
-  echo "-----------------------------"
-}
-
-set_default_parameters() {
-  local full_domain_name="${SUBDOMAIN:+${SUBDOMAIN}.}${ROOT_DOMAIN_NAME}"
-  : "${STACK_NAME:=$(echo "$full_domain_name" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
-  : "${BUCKET_NAME:=$full_domain_name}"
+  style green "Provisioning complete for ${FULL_DOMAIN_NAME}!"
+  style dim "You can now upload your static files to the S3 bucket named ${BUCKET_NAME}"
 }
 
 main() {
-  local BUCKET_NAME=""
-  local SUBDOMAIN=""
-  local HOSTED_ZONE_ID=""
-  local STACK_NAME=""
-  local POSITIONAL_ARGS=()
   check_dependencies
-  parse_arguments "$@"
+  get_config_from_arguments "$@"
 
-  local ROOT_DOMAIN_NAME="${POSITIONAL_ARGS[0]}"
-
-  if [[ -z "$ROOT_DOMAIN_NAME" ]]; then
-    echo "Error: Missing required argument: <site-name>" >&2
-    usage
-    exit 1
-  fi
-
-  set_default_parameters
-  display_config
+  print_config
 
   deploy_cloudformation_stack
-  describe_stack
+  display_outputs
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
-fi
+main "$@"
