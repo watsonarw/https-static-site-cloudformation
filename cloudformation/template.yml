@@ -47,19 +47,19 @@ Resources:
   TLSCertificate:
     Type: "AWS::CertificateManager::Certificate"
     Properties:
-      DomainName: !If [HasSubdomain, !Join [".", [!Ref Subdomain, !Ref RootDomainName]], !Ref RootDomainName]
+      DomainName: !If [HasSubdomain, !Sub "${Subdomain}.${RootDomainName}", !Ref RootDomainName]
       SubjectAlternativeNames: !If
         - HasSubdomain
         - !Ref AWS::NoValue
-        - - !Join [".", ["www", !Ref RootDomainName]]
+        - - !Sub "www.${RootDomainName}"
       ValidationMethod: DNS
       DomainValidationOptions: !If
         - HasSubdomain
-        - - DomainName: !Join [".", [!Ref Subdomain, !Ref RootDomainName]]
+        - - DomainName: !Sub "${Subdomain}.${RootDomainName}"
             HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
         - - DomainName: !Ref RootDomainName
             HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
-          - DomainName: !Join [".", ["www", !Ref RootDomainName]]
+          - DomainName: !Sub "www.${RootDomainName}"
             HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
 
   SiteOAC:
@@ -79,12 +79,12 @@ Resources:
         Enabled: true
         Aliases: !If
           - HasSubdomain
-          - - !Join [".", [!Ref Subdomain, !Ref RootDomainName]]
+          - - !Sub "${Subdomain}.${RootDomainName}"
           - - !Ref RootDomainName
-            - !Join [".", ["www", !Ref RootDomainName]]
+            - !Sub "www.${RootDomainName}"
         Origins:
           - Id: S3Bucket
-            DomainName: !GetAtt [SiteS3Bucket, RegionalDomainName]
+            DomainName: !GetAtt SiteS3Bucket.RegionalDomainName
             S3OriginConfig: {}
             OriginAccessControlId: !Ref SiteOAC
         HttpVersion: "http2"
@@ -148,10 +148,10 @@ Resources:
     Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
-      Name: !If [HasSubdomain, !Join [".", [!Ref Subdomain, !Ref RootDomainName]], !Ref RootDomainName]
+      Name: !If [HasSubdomain, !Sub "${Subdomain}.${RootDomainName}", !Ref RootDomainName]
       Type: A
       AliasTarget:
-        DNSName: !GetAtt [SiteCDN, DomainName]
+        DNSName: !GetAtt SiteCDN.DomainName
         HostedZoneId: Z2FDTNDATAQYW2
 
   SiteWWWRecord:
@@ -159,7 +159,7 @@ Resources:
     Type: "AWS::Route53::RecordSet"
     Properties:
       HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
-      Name: !Join [".", ["www", !Ref RootDomainName]]
+      Name: !Sub "www.${RootDomainName}"
       Type: CNAME
       TTL: 600
       ResourceRecords:
@@ -168,15 +168,14 @@ Resources:
 Outputs:
   WebsiteURL:
     Description: URL for the website
-    Value: !Join
-      - ""
-      - - "https://"
-        - !If [HasSubdomain, !Join [".", [!Ref Subdomain, !Ref RootDomainName]], !Ref RootDomainName]
+    Value: !Sub
+      - "https://${DomainName}/"
+      - DomainName: !If [HasSubdomain, !Sub "${Subdomain}.${RootDomainName}", !Ref RootDomainName]
 
   NameServers:
     Condition: CreateNewHostedZone
     Description: DNS NameServers for the site
-    Value: !Join [", ", !GetAtt [SiteHostedZone, NameServers]]
+    Value: !Join [", ", !GetAtt SiteHostedZone.NameServers]
 
   CloudFrontDistributionId:
     Description: The CloudFront Distribution Id to be used for creating invalidations during deployment
