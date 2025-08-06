@@ -35,21 +35,25 @@ parse_arguments() {
     case "$current_arg" in
     -b | --bucket-name)
       require_argument "$current_arg" "$next_arg"
+      warn_if_conflict "--bucket-name" "$BUCKET_NAME"
       BUCKET_NAME="$next_arg"
       shift
       ;;
     -s | --subdomain)
       require_argument "$current_arg" "$next_arg"
+      warn_if_conflict "--subdomain" "$SUBDOMAIN"
       SUBDOMAIN="$next_arg"
       shift
       ;;
     -z | --hosted-zone-id)
       require_argument "$current_arg" "$next_arg"
+      warn_if_conflict "--hosted-zone-id" "$HOSTED_ZONE_ID"
       HOSTED_ZONE_ID="$next_arg"
       shift
       ;;
     -n | --stack-name)
       require_argument "$current_arg" "$next_arg"
+      warn_if_conflict "--stack-name" "$STACK_NAME"
       STACK_NAME="$next_arg"
       shift
       ;;
@@ -71,17 +75,6 @@ parse_arguments() {
     esac
     shift
   done
-}
-
-check_dependencies() {
-  if ! command_exists aws; then
-    style red <<-EOF
-You need aws-cli to run this!
-For instructions on how to install it, see:
-https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-set-up.html
-EOF
-    exit 1
-  fi
 }
 
 set_default_parameters() {
