@@ -62,6 +62,31 @@ To disable URI canonicalization if you need non-standard URI handling (e.g. if y
 ./provision example.com --no-canonical-uris
 ```
 
+### Security Headers
+By default, the following security headers will be added to responses
+- `Strict-Transport-Security: max-age=31536000;`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Cross-Origin-Opener-Policy: same-origin-allow-popups`
+- `Content-Security-Policy: frame-ancestors 'self'`
+
+These headers add some security benefits while being minimally restrictive, and are unlikely to cause issues. In some cases, these headers might cause problems (e.g. if pages from your site are embedded in IFrames on another site, or in some SSO/Payment flows), so these headers can be disabled with:
+```bash
+./provision example.com --no-security-headers
+```
+
+#### Content Security Policy
+
+The default content security policy is deliberately permissive so as not to cause issues, and really only prevents embedding pages in cross-origin IFrames. If you want something more restrictive, you can do so with a meta tag in your pages e.g.
+```html
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:;">
+```
+
+Alternatively, the CSP header for all pages can be set with:
+```bash
+./provision example.com --csp-policy "default-src 'self'; img-src 'self' https: data:; frame-ancestors 'none'"
+```
+
 [Cloudformation]: https://aws.amazon.com/cloudformation/
 [AWS::S3::Bucket]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
 [AWS::S3:BucketPolicy]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-policy.html

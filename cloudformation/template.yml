@@ -18,11 +18,21 @@ Parameters:
     Description: "Enable URI canonicalization that normalizes slashes and redirects extensionless paths to directory format (/about -> /about/) for SEO benefits."
     Default: "true"
     AllowedValues: ["true", "false"]
+  EnableSecurityHeaders:
+    Type: String
+    Description: "Enable default security headers for the site. Provides additional security against common web vulnerabilities."
+    Default: "true"
+    AllowedValues: ["true", "false"]
+  ContentSecurityPolicy:
+    Type: String
+    Description: "Override the default Content Security Policy (CSP) for the site."
+    Default: "frame-ancestors 'self';"
 
 Conditions:
   CreateNewHostedZone: !Equals [!Ref HostedZoneId, ""]
   HasSubdomain: !Not [!Equals [!Ref Subdomain, ""]]
   CreateWWWRecord: !Not [!Condition HasSubdomain]
+  EnableSecurityHeaders: !Equals [!Ref EnableSecurityHeaders, "true"]
 
 Resources:
   SiteS3Bucket:
@@ -104,6 +114,10 @@ Resources:
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt ViewerRequestHandler.FunctionARN
+          ResponseHeadersPolicyId: !If
+            - EnableSecurityHeaders
+            - !Ref ResponseHeadersPolicy
+            - !Ref AWS::NoValue
         CustomErrorResponses:
           - ErrorCachingMinTTL: 0
             ErrorCode: 400
@@ -165,6 +179,30 @@ Resources:
           return request;
         }
 
+  ResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Condition: EnableSecurityHeaders
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub "${AWS::StackName}-security-headers"
+        SecurityHeadersConfig:
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000 # 1 year
+            Override: true
+            IncludeSubdomains: false
+          ContentTypeOptions:
+            Override: true
+          ReferrerPolicy:
+            Override: true
+            ReferrerPolicy: strict-origin-when-cross-origin
+          ContentSecurityPolicy:
+            Override: true
+            ContentSecurityPolicy: !Ref ContentSecurityPolicy
+        CustomHeadersConfig:
+          Items:
+            - Header: "Cross-Origin-Opener-Policy"
+              Value: "same-origin-allow-popups"
+              Override: true
   SiteHostedZone:
     Condition: CreateNewHostedZone
     Type: "AWS::Route53::HostedZone"
