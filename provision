@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -euo pipefail
+set -eu
 
 . "$(dirname "${0}")/lib/load.sh"
 
@@ -11,8 +11,6 @@ ENABLE_CANONICAL_URIS=""
 ROOT_DOMAIN_NAME=""
 ENABLE_SECURITY_HEADERS=""
 CONTENT_SECURITY_POLICY=""
-
-POSITIONAL_ARGS=()
 
 usage() {
   style <<-EOF
@@ -36,6 +34,7 @@ EOF
 check_dependencies
 
 # Parse Arguments
+POSITIONAL_ARGS=""
 while [ "$#" -gt 0 ]; do
   current_arg="$1"
   next_arg="${2-}"
@@ -88,14 +87,18 @@ while [ "$#" -gt 0 ]; do
     exit 1
     ;;
   *)
-    POSITIONAL_ARGS+=("$current_arg")
+    POSITIONAL_ARGS="${POSITIONAL_ARGS:+$POSITIONAL_ARGS }${current_arg}"
     ;;
   esac
   shift
 done
 
+# shellcheck disable=SC2086
+set -- $POSITIONAL_ARGS
+unset POSITIONAL_ARGS
+
 # Set positional arguments
-ROOT_DOMAIN_NAME="${POSITIONAL_ARGS[0]:-}"
+ROOT_DOMAIN_NAME="${1}"
 
 # Validate required arguments
 if [ -z "$ROOT_DOMAIN_NAME" ]; then
