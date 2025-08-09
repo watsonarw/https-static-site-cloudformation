@@ -8,10 +8,11 @@ SUBDOMAIN=""
 HOSTED_ZONE_ID=""
 STACK_NAME=""
 ENABLE_CANONICAL_URIS=""
-POSITIONAL_ARGS=()
 ROOT_DOMAIN_NAME=""
 ENABLE_SECURITY_HEADERS=""
 CONTENT_SECURITY_POLICY=""
+
+POSITIONAL_ARGS=()
 
 usage() {
   style <<-EOF
@@ -32,89 +33,84 @@ Options:
 EOF
 }
 
-parse_arguments() {
-  while [ "$#" -gt 0 ]; do
-    local current_arg="$1"
-    local next_arg="${2-}"
+check_dependencies
 
-    case "$current_arg" in
-    -b | --bucket-name)
-      require_argument "$current_arg" "$next_arg"
-      warn_if_conflict "--bucket-name" "$BUCKET_NAME"
-      BUCKET_NAME="$next_arg"
-      shift
-      ;;
-    -s | --subdomain)
-      require_argument "$current_arg" "$next_arg"
-      warn_if_conflict "--subdomain" "$SUBDOMAIN"
-      SUBDOMAIN="$next_arg"
-      shift
-      ;;
-    -z | --hosted-zone-id)
-      require_argument "$current_arg" "$next_arg"
-      warn_if_conflict "--hosted-zone-id" "$HOSTED_ZONE_ID"
-      HOSTED_ZONE_ID="$next_arg"
-      shift
-      ;;
-    -n | --stack-name)
-      require_argument "$current_arg" "$next_arg"
-      warn_if_conflict "--stack-name" "$STACK_NAME"
-      STACK_NAME="$next_arg"
-      shift
-      ;;
-    -nc | --no-canonical-uris)
-      ENABLE_CANONICAL_URIS="false"
-      ;;
-    --no-security-headers)
-      warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY" "CSP policy will not be applied when security headers are disabled"
-      ENABLE_SECURITY_HEADERS="false"
-      ;;
-    --csp-policy)
-      require_argument "$current_arg" "$next_arg"
-      warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY"
-      warn_if_conflict "--no-security-headers" "$ENABLE_SECURITY_HEADERS" "CSP policy will not be applied when security headers are disabled"
-      CONTENT_SECURITY_POLICY="$next_arg"
-      ;;
-    -h | --help)
-      usage
-      exit 0
-      ;;
-    -*)
-      echo "Unknown option: $current_arg" >&2
-      usage
-      exit 1
-      ;;
-    *)
-      POSITIONAL_ARGS+=("$current_arg")
-      ;;
-    esac
+# Parse Arguments
+while [ "$#" -gt 0 ]; do
+  current_arg="$1"
+  next_arg="${2-}"
+
+  case "$current_arg" in
+  -b | --bucket-name)
+    require_argument "$current_arg" "$next_arg"
+    warn_if_conflict "--bucket-name" "$BUCKET_NAME"
+    BUCKET_NAME="$next_arg"
     shift
-  done
-}
-
-set_default_parameters() {
-  FULL_DOMAIN_NAME="${SUBDOMAIN:+${SUBDOMAIN}.}${ROOT_DOMAIN_NAME}"
-  : "${STACK_NAME:=$(echo "$FULL_DOMAIN_NAME" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
-  : "${BUCKET_NAME:=$FULL_DOMAIN_NAME}"
-  : "${ENABLE_CANONICAL_URIS:=true}"
-  : "${ENABLE_SECURITY_HEADERS:=true}"
-  : "${CONTENT_SECURITY_POLICY:=frame-ancestors 'self';}"
-
-}
-
-get_config_from_arguments() {
-  parse_arguments "$@"
-
-  ROOT_DOMAIN_NAME="${POSITIONAL_ARGS[0]:-}"
-
-  if [ -z "$ROOT_DOMAIN_NAME" ]; then
-    style red "Error: Missing required argument: <site-name>" >&2
+    ;;
+  -s | --subdomain)
+    require_argument "$current_arg" "$next_arg"
+    warn_if_conflict "--subdomain" "$SUBDOMAIN"
+    SUBDOMAIN="$next_arg"
+    shift
+    ;;
+  -z | --hosted-zone-id)
+    require_argument "$current_arg" "$next_arg"
+    warn_if_conflict "--hosted-zone-id" "$HOSTED_ZONE_ID"
+    HOSTED_ZONE_ID="$next_arg"
+    shift
+    ;;
+  -n | --stack-name)
+    require_argument "$current_arg" "$next_arg"
+    warn_if_conflict "--stack-name" "$STACK_NAME"
+    STACK_NAME="$next_arg"
+    shift
+    ;;
+  -nc | --no-canonical-uris)
+    ENABLE_CANONICAL_URIS="false"
+    ;;
+  --no-security-headers)
+    warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY" "CSP policy will not be applied when security headers are disabled"
+    ENABLE_SECURITY_HEADERS="false"
+    ;;
+  --csp-policy)
+    require_argument "$current_arg" "$next_arg"
+    warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY"
+    warn_if_conflict "--no-security-headers" "$ENABLE_SECURITY_HEADERS" "CSP policy will not be applied when security headers are disabled"
+    CONTENT_SECURITY_POLICY="$next_arg"
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  -*)
+    style red "Unknown option: $current_arg" >&2
     usage
     exit 1
-  fi
+    ;;
+  *)
+    POSITIONAL_ARGS+=("$current_arg")
+    ;;
+  esac
+  shift
+done
 
-  set_default_parameters
-}
+# Set positional arguments
+ROOT_DOMAIN_NAME="${POSITIONAL_ARGS[0]:-}"
+
+# Validate required arguments
+if [ -z "$ROOT_DOMAIN_NAME" ]; then
+  style red "Error: Missing required argument: <site-name>" >&2
+  usage
+  exit 1
+fi
+
+# Set default values for optional arguments
+FULL_DOMAIN_NAME="${SUBDOMAIN:+${SUBDOMAIN}.}${ROOT_DOMAIN_NAME}"
+: "${STACK_NAME:=$(echo "$FULL_DOMAIN_NAME" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
+: "${BUCKET_NAME:=$FULL_DOMAIN_NAME}"
+: "${ENABLE_CANONICAL_URIS:=true}"
+: "${ENABLE_SECURITY_HEADERS:=true}"
+: "${CONTENT_SECURITY_POLICY:=frame-ancestors 'self';}"
 
 print_config() {
   if [ "$ENABLE_SECURITY_HEADERS" = "true" ]; then
@@ -169,14 +165,7 @@ display_outputs() {
   style dim "You can now upload your static files to the S3 bucket named ${BUCKET_NAME}"
 }
 
-main() {
-  check_dependencies
-  get_config_from_arguments "$@"
-
-  print_config
-
-  deploy_cloudformation_stack
-  display_outputs
-}
-
-main "$@"
+# Main execution
+print_config
+deploy_cloudformation_stack
+display_outputs
