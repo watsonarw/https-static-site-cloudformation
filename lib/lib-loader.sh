@@ -4,12 +4,12 @@
 #   load_libs /path/to/lib
 
 load_libs() {
-  target_dir="$1"
+	target_dir="$1"
 
-  for script_file in "$target_dir"/*.lib.sh; do
-    if [ -f "$script_file" ]; then
-      # shellcheck source=/dev/null
-      . "$script_file"
-    fi
-  done
+	for script_file in "$target_dir"/*.lib.sh; do
+		if [ -f "$script_file" ]; then
+			# shellcheck source=/dev/null
+			. "$script_file"
+		fi
+	done
 }

@@ -4,3 +4,9 @@ indent_size = 2
 trim_trailing_whitespace = true
 insert_final_newline = true
 max_line_length = 120
+
+[*.sh]
+indent_style = tab # Heredoc <<-EOF syntax will strip leading tabs, so we use tabs for shell scripts
+
+[provision]
+indent_style = tab # Heredoc <<-EOF syntax will strip leading tabs, so we use tabs for shell scripts

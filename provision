@@ -14,22 +14,22 @@ ENABLE_SECURITY_HEADERS=""
 CONTENT_SECURITY_POLICY=""
 
 usage() {
-  style <<-EOF
-Usage: $0 [options] <site-name>
+	style <<-EOF
+		Usage: $0 [options] <site-name>
 
-Creates a new AWS CloudFormation stack to provision a static website.
+		Creates a new AWS CloudFormation stack to provision a static website.
 
-Options:
-  -b, --bucket-name <name>    Specify a custom bucket name.
-  -s, --subdomain <name>      Specify a subdomain.
-  -z, --hosted-zone-id <ID>   Use an existing Hosted Zone ID instead of creating one.
-  -n, --stack-name <name>     Specify a custom CloudFormation stack name.
-  -nc, --no-canonical-uris    Disable URI canonicalization (See ./README.md for more details).
-  --no-security-headers       Disable the default security headers.
-  --csp-policy <policy>       Specify a custom Content Security Policy (CSP) for the site.
-                              Default is "frame-ancestors 'self';".
-  -h, --help                  Display this help message.
-EOF
+		Options:
+		  -b, --bucket-name <name>    Specify a custom bucket name.
+		  -s, --subdomain <name>      Specify a subdomain.
+		  -z, --hosted-zone-id <ID>   Use an existing Hosted Zone ID instead of creating one.
+		  -n, --stack-name <name>     Specify a custom CloudFormation stack name.
+		  -nc, --no-canonical-uris    Disable URI canonicalization (See ./README.md for more details).
+		  --no-security-headers       Disable the default security headers.
+		  --csp-policy <policy>       Specify a custom Content Security Policy (CSP) for the site.
+		                              Default is "frame-ancestors 'self';".
+		  -h, --help                  Display this help message.
+	EOF
 }
 
 check_dependencies
@@ -37,61 +37,61 @@ check_dependencies
 # Parse Arguments
 POSITIONAL_ARGS=""
 while [ "$#" -gt 0 ]; do
-  current_arg="$1"
-  next_arg="${2-}"
+	current_arg="$1"
+	next_arg="${2-}"
 
-  case "$current_arg" in
-  -b | --bucket-name)
-    require_argument "$current_arg" "$next_arg"
-    warn_if_conflict "--bucket-name" "$BUCKET_NAME"
-    BUCKET_NAME="$next_arg"
-    shift
-    ;;
-  -s | --subdomain)
-    require_argument "$current_arg" "$next_arg"
-    warn_if_conflict "--subdomain" "$SUBDOMAIN"
-    SUBDOMAIN="$next_arg"
-    shift
-    ;;
-  -z | --hosted-zone-id)
-    require_argument "$current_arg" "$next_arg"
-    warn_if_conflict "--hosted-zone-id" "$HOSTED_ZONE_ID"
-    HOSTED_ZONE_ID="$next_arg"
-    shift
-    ;;
-  -n | --stack-name)
-    require_argument "$current_arg" "$next_arg"
-    warn_if_conflict "--stack-name" "$STACK_NAME"
-    STACK_NAME="$next_arg"
-    shift
-    ;;
-  -nc | --no-canonical-uris)
-    ENABLE_CANONICAL_URIS="false"
-    ;;
-  --no-security-headers)
-    warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY" "CSP policy will not be applied when security headers are disabled"
-    ENABLE_SECURITY_HEADERS="false"
-    ;;
-  --csp-policy)
-    require_argument "$current_arg" "$next_arg"
-    warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY"
-    warn_if_conflict "--no-security-headers" "$ENABLE_SECURITY_HEADERS" "CSP policy will not be applied when security headers are disabled"
-    CONTENT_SECURITY_POLICY="$next_arg"
-    ;;
-  -h | --help)
-    usage
-    exit 0
-    ;;
-  -*)
-    style red "Unknown option: $current_arg" >&2
-    usage
-    exit 1
-    ;;
-  *)
-    POSITIONAL_ARGS="${POSITIONAL_ARGS:+$POSITIONAL_ARGS }${current_arg}"
-    ;;
-  esac
-  shift
+	case "$current_arg" in
+	-b | --bucket-name)
+		require_argument "$current_arg" "$next_arg"
+		warn_if_conflict "--bucket-name" "$BUCKET_NAME"
+		BUCKET_NAME="$next_arg"
+		shift
+		;;
+	-s | --subdomain)
+		require_argument "$current_arg" "$next_arg"
+		warn_if_conflict "--subdomain" "$SUBDOMAIN"
+		SUBDOMAIN="$next_arg"
+		shift
+		;;
+	-z | --hosted-zone-id)
+		require_argument "$current_arg" "$next_arg"
+		warn_if_conflict "--hosted-zone-id" "$HOSTED_ZONE_ID"
+		HOSTED_ZONE_ID="$next_arg"
+		shift
+		;;
+	-n | --stack-name)
+		require_argument "$current_arg" "$next_arg"
+		warn_if_conflict "--stack-name" "$STACK_NAME"
+		STACK_NAME="$next_arg"
+		shift
+		;;
+	-nc | --no-canonical-uris)
+		ENABLE_CANONICAL_URIS="false"
+		;;
+	--no-security-headers)
+		warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY" "CSP policy will not be applied when security headers are disabled"
+		ENABLE_SECURITY_HEADERS="false"
+		;;
+	--csp-policy)
+		require_argument "$current_arg" "$next_arg"
+		warn_if_conflict "--csp-policy" "$CONTENT_SECURITY_POLICY"
+		warn_if_conflict "--no-security-headers" "$ENABLE_SECURITY_HEADERS" "CSP policy will not be applied when security headers are disabled"
+		CONTENT_SECURITY_POLICY="$next_arg"
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-*)
+		style red "Unknown option: $current_arg" >&2
+		usage
+		exit 1
+		;;
+	*)
+		POSITIONAL_ARGS="${POSITIONAL_ARGS:+$POSITIONAL_ARGS }${current_arg}"
+		;;
+	esac
+	shift
 done
 
 # shellcheck disable=SC2086
@@ -103,9 +103,9 @@ ROOT_DOMAIN_NAME="${1}"
 
 # Validate required arguments
 if [ -z "$ROOT_DOMAIN_NAME" ]; then
-  style red "Error: Missing required argument: <site-name>" >&2
-  usage
-  exit 1
+	style red "Error: Missing required argument: <site-name>" >&2
+	usage
+	exit 1
 fi
 
 # Set default values for optional arguments
@@ -117,56 +117,56 @@ FULL_DOMAIN_NAME="${SUBDOMAIN:+${SUBDOMAIN}.}${ROOT_DOMAIN_NAME}"
 : "${CONTENT_SECURITY_POLICY:=frame-ancestors 'self';}"
 
 print_config() {
-  if [ "$ENABLE_SECURITY_HEADERS" = "true" ]; then
-    CSP_DISPLAY_VALUE="$CONTENT_SECURITY_POLICY"
-  else
-    CSP_DISPLAY_VALUE="${DIM}(disabled)${RESET}"
-  fi
+	if [ "$ENABLE_SECURITY_HEADERS" = "true" ]; then
+		CSP_DISPLAY_VALUE="$CONTENT_SECURITY_POLICY"
+	else
+		CSP_DISPLAY_VALUE="${DIM}(disabled)${RESET}"
+	fi
 
-  style <<-EOF
-${BOLD}---- Configuration Summary ---${RESET}
-Root Domain Name:           $ROOT_DOMAIN_NAME
-Subdomain:                  ${SUBDOMAIN:-"${DIM}(none)${RESET}"}
-Bucket Name:                ${BUCKET_NAME}
-Hosted Zone ID:             ${HOSTED_ZONE_ID:-"${DIM}(to be created)${RESET}"}
-CloudFormation Stack Name:  ${STACK_NAME}
-Canonical URIs:             ${ENABLE_CANONICAL_URIS}
-Security Headers:           ${ENABLE_SECURITY_HEADERS}
-Content Security Policy:    ${CSP_DISPLAY_VALUE}
-${BOLD}-----------------------------${RESET}
-EOF
+	style <<-EOF
+		${BOLD}---- Configuration Summary ---${RESET}
+		Root Domain Name:           $ROOT_DOMAIN_NAME
+		Subdomain:                  ${SUBDOMAIN:-"${DIM}(none)${RESET}"}
+		Bucket Name:                ${BUCKET_NAME}
+		Hosted Zone ID:             ${HOSTED_ZONE_ID:-"${DIM}(to be created)${RESET}"}
+		CloudFormation Stack Name:  ${STACK_NAME}
+		Canonical URIs:             ${ENABLE_CANONICAL_URIS}
+		Security Headers:           ${ENABLE_SECURITY_HEADERS}
+		Content Security Policy:    ${CSP_DISPLAY_VALUE}
+		${BOLD}-----------------------------${RESET}
+	EOF
 }
 
 deploy_cloudformation_stack() {
-  style blue "Start provisioning for ${FULL_DOMAIN_NAME}"
+	style blue "Start provisioning for ${FULL_DOMAIN_NAME}"
 
-  echo "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
-  aws cloudformation deploy \
-    --stack-name "${STACK_NAME}" \
-    --template-file cloudformation/template.yml \
-    --parameter-overrides \
-    "RootDomainName=${ROOT_DOMAIN_NAME}" \
-    "BucketName=${BUCKET_NAME}" \
-    "HostedZoneId=${HOSTED_ZONE_ID:-}" \
-    "Subdomain=${SUBDOMAIN:-}" \
-    "EnableCanonicalURIs=${ENABLE_CANONICAL_URIS}" \
-    "EnableSecurityHeaders=${ENABLE_SECURITY_HEADERS}" \
-    "ContentSecurityPolicy=${CONTENT_SECURITY_POLICY}"
+	echo "Deploying Cloudformation stack ${STACK_NAME} for ${ROOT_DOMAIN_NAME}"
+	aws cloudformation deploy \
+		--stack-name "${STACK_NAME}" \
+		--template-file cloudformation/template.yml \
+		--parameter-overrides \
+		"RootDomainName=${ROOT_DOMAIN_NAME}" \
+		"BucketName=${BUCKET_NAME}" \
+		"HostedZoneId=${HOSTED_ZONE_ID:-}" \
+		"Subdomain=${SUBDOMAIN:-}" \
+		"EnableCanonicalURIs=${ENABLE_CANONICAL_URIS}" \
+		"EnableSecurityHeaders=${ENABLE_SECURITY_HEADERS}" \
+		"ContentSecurityPolicy=${CONTENT_SECURITY_POLICY}"
 
-  style green "Stack provisioned successfully!"
+	style green "Stack provisioned successfully!"
 }
 
 display_outputs() {
-  style blue "Stack outputs for ${STACK_NAME}"
-  aws cloudformation describe-stacks \
-    --stack-name "${STACK_NAME}" \
-    --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
-    --output text | while read -r key value; do
-    printf "  ${BOLD}%s:${RESET} %s\n" "$key" "$value"
-  done
+	style blue "Stack outputs for ${STACK_NAME}"
+	aws cloudformation describe-stacks \
+		--stack-name "${STACK_NAME}" \
+		--query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
+		--output text | while read -r key value; do
+		printf "  ${BOLD}%s:${RESET} %s\n" "$key" "$value"
+	done
 
-  style green "Provisioning complete for ${FULL_DOMAIN_NAME}!"
-  style dim "You can now upload your static files to the S3 bucket named ${BUCKET_NAME}"
+	style green "Provisioning complete for ${FULL_DOMAIN_NAME}!"
+	style dim "You can now upload your static files to the S3 bucket named ${BUCKET_NAME}"
 }
 
 # Main execution
