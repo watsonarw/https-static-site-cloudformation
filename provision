@@ -12,23 +12,24 @@ ENABLE_CANONICAL_URIS=""
 ROOT_DOMAIN_NAME=""
 ENABLE_SECURITY_HEADERS=""
 CONTENT_SECURITY_POLICY=""
+TAGS=""
 
 usage() {
-	style <<-EOF
-		Usage: $0 [options] <site-name>
+	style bold <<-EOF
+		${RESET}Usage: $0 [options] <site-name>
 
-		Creates a new AWS CloudFormation stack to provision a static website.
+		${RESET}Creates a new AWS CloudFormation stack to provision a static website.
 
-		Options:
-		  -b, --bucket-name <name>    Specify a custom bucket name.
-		  -s, --subdomain <name>      Specify a subdomain.
-		  -z, --hosted-zone-id <ID>   Use an existing Hosted Zone ID instead of creating one.
-		  -n, --stack-name <name>     Specify a custom CloudFormation stack name.
-		  -nc, --no-canonical-uris    Disable URI canonicalization (See ./README.md for more details).
-		  --no-security-headers       Disable the default security headers.
-		  --csp-policy <policy>       Specify a custom Content Security Policy (CSP) for the site.
-		                              Default is "frame-ancestors 'self';".
-		  -h, --help                  Display this help message.
+		${RESET}Options:
+		  -b, --bucket-name <name>    ${RESET}Specify a custom bucket name.
+		  -s, --subdomain <name>      ${RESET}Specify a subdomain.
+		  -z, --hosted-zone-id <ID>   ${RESET}Use an existing Hosted Zone ID instead of creating one.
+		  -n, --stack-name <name>     ${RESET}Specify a custom CloudFormation stack name.
+		  -nc, --no-canonical-uris    ${RESET}Disable URI canonicalization (See ./README.md for more details).
+		  --no-security-headers       ${RESET}Disable the default security headers.
+		  --csp-policy <policy>       ${RESET}Specify a custom Content Security Policy (CSP) for the site.
+		                              ${RESET}${DIM}Default is "frame-ancestors 'self';".
+		  -h, --help                  ${RESET}Display this help message.
 	EOF
 }
 
@@ -145,13 +146,13 @@ deploy_cloudformation_stack() {
 		--stack-name "${STACK_NAME}" \
 		--template-file cloudformation/template.yml \
 		--parameter-overrides \
-		"RootDomainName=${ROOT_DOMAIN_NAME}" \
-		"BucketName=${BUCKET_NAME}" \
-		"HostedZoneId=${HOSTED_ZONE_ID:-}" \
-		"Subdomain=${SUBDOMAIN:-}" \
-		"EnableCanonicalURIs=${ENABLE_CANONICAL_URIS}" \
-		"EnableSecurityHeaders=${ENABLE_SECURITY_HEADERS}" \
-		"ContentSecurityPolicy=${CONTENT_SECURITY_POLICY}"
+			"RootDomainName=${ROOT_DOMAIN_NAME}" \
+			"BucketName=${BUCKET_NAME}" \
+			"HostedZoneId=${HOSTED_ZONE_ID:-}" \
+			"Subdomain=${SUBDOMAIN:-}" \
+			"EnableCanonicalURIs=${ENABLE_CANONICAL_URIS}" \
+			"EnableSecurityHeaders=${ENABLE_SECURITY_HEADERS}" \
+			"ContentSecurityPolicy=${CONTENT_SECURITY_POLICY}" \
 
 	style green "Stack provisioned successfully!"
 }
