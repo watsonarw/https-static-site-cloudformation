@@ -29,6 +29,9 @@ usage() {
 		  --no-security-headers       ${RESET}Disable the default security headers.
 		  --csp-policy <policy>       ${RESET}Specify a custom Content Security Policy (CSP) for the site.
 		                              ${RESET}${DIM}Default is "frame-ancestors 'self';".
+		  -t, --tag <tag>             ${RESET}Add a tag (format: key=value).
+		  --tags <tags>               ${RESET}Add multiple tags (format: "key1=value1 key2=value2").
+		                              ${RESET}${DIM}Note: --tag and --tags can be combined and used multiple times.
 		  -h, --help                  ${RESET}Display this help message.
 	EOF
 }
@@ -64,6 +67,11 @@ while [ "$#" -gt 0 ]; do
 		require_argument "$current_arg" "$next_arg"
 		warn_if_conflict "--stack-name" "$STACK_NAME"
 		STACK_NAME="$next_arg"
+		shift
+		;;
+	-t | --tag | --tags)
+		require_argument "$current_arg" "$next_arg"
+		TAGS="${TAGS:+$TAGS }${next_arg}"
 		shift
 		;;
 	-nc | --no-canonical-uris)
@@ -134,6 +142,7 @@ print_config() {
 		Canonical URIs:             ${ENABLE_CANONICAL_URIS}
 		Security Headers:           ${ENABLE_SECURITY_HEADERS}
 		Content Security Policy:    ${CSP_DISPLAY_VALUE}
+		Tags:                       ${TAGS:-"${DIM}(none)${RESET}"}
 		${BOLD}-----------------------------${RESET}
 	EOF
 }
@@ -153,6 +162,7 @@ deploy_cloudformation_stack() {
 			"EnableCanonicalURIs=${ENABLE_CANONICAL_URIS}" \
 			"EnableSecurityHeaders=${ENABLE_SECURITY_HEADERS}" \
 			"ContentSecurityPolicy=${CONTENT_SECURITY_POLICY}" \
+		${TAGS:+--tags $TAGS}
 
 	style green "Stack provisioned successfully!"
 }

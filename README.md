@@ -50,6 +50,33 @@ For full usage instructions, run
 ./provision --help
 ```
 
+#### Tags
+
+Tags can be added to the CloudFormation stack (which will automatically tag all supported resources in the stack) with the `--tag` or `--tags` flags:
+```bash
+./provision example.com --tag "Environment=production" --tag "Team=MyTeam"
+
+./provision example.net --tags "Environment=production Team=MyTeam"
+```
+
+These flags can be combined and used multiple times, and all tags will be applied
+
+```bash
+./provision example.com --tag "Environment=production" --tags "Domain=web Product=web" -tag "Team=MyTeam"
+```
+is equivalent to
+```bash
+./provision example.com --tags "Environment=production Domain=web Product=web Team=MyTeam"
+```
+
+When CloudFormation applies the tags, the last value for the key will be set, e.g.
+```bash
+./provision example.com --tags "Environment=test Environment=production"
+```
+
+will set the `Environment` tag with the value `production`
+
+
 ### URI Canonicalization
 
 By default, the CloudFront distribution includes URI canonicalization that will do the following redirects to improve SEO:
