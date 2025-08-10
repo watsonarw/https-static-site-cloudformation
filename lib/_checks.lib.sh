@@ -1,7 +1,7 @@
 # This script is meant to be sourced, not executed.
 
 command_exists() {
-  type "$1" &>/dev/null
+  command -v "$1" >/dev/null 2>&1
 }
 
 check_dependencies() {
@@ -16,20 +16,18 @@ EOF
 }
 
 require_argument() {
-  local option_name="$1"
-  local option_value="$2"
-  if [[ -z "$option_value" || "$option_value" =~ ^- ]]; then
+  option_name="$1" option_value="$2"
+
+  if [ -z "$option_value" ] || [ "${option_value#-}" != "$option_value" ]; then
     style red "Error: Argument for $option_name is missing or invalid" >&2
     exit 1
   fi
 }
 
 warn_if_conflict() {
-  local arg_name="$1"
-  local existing_value="$2"
-  local custom_message="${3:-}"
+  option_name="$1" existing_value="$2" custom_message="${3:-}"
 
   if [ -n "$existing_value" ]; then
-    style yellow "Warning: ${custom_message:-$arg_name specified multiple times. Using last value.}" >&2
+    style yellow "Warning: ${custom_message:-$option_name specified multiple times. Using last value.}" >&2
   fi
 }

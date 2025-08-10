@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
-. "$(dirname "${0}")/lib/load.sh"
+. "$(dirname "${0}")/lib/lib-loader.sh"
+load_libs "$(dirname "${0}")/lib"
 
 BUCKET_NAME=""
 SUBDOMAIN=""

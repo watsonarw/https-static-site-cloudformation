@@ -55,60 +55,71 @@ setup_color() {
     BG_WHITE=""
     RESET=""
   fi
+
+  export BOLD DIM ITALIC UNDERLINE BLINK INVERT STRIKETHROUGH
+  export RED GREEN YELLOW BLUE MAGENTA CYAN WHITE
+  export BG_RED BG_GREEN BG_YELLOW BG_BLUE BG_MAGENTA BG_CYAN BG_WHITE
+  export RESET
 }
 
 style() {
-  local text
-  local styles
+  text=""
+  styles=""
 
   if [ ! -t 0 ]; then
+    # Text from stdin, all arguments are styles
     text=$(cat)
-    styles=("$@")
+    styles="$*"
   elif [ "$#" -eq 0 ]; then
+    # No arguments, print newline, like echo
+    printf '\n'
     return
   else
-    text="${@: -1}"
-    styles=("${@:1:$#-1}")
+    # Last argument is text, the rest are styles
+    while [ "$#" -gt 1 ]; do
+      styles="${styles:+$styles }$1"
+      shift
+    done
+    text="$1"
   fi
 
-  if ! [ -t 1 ]; then
+  # If not connected to terminal, just print text without formatting
+  if [ ! -t 1 ]; then
     printf '%s\n' "$text"
     return
   fi
 
-  local codes=()
-  for s in "${styles[@]:-}"; do
-    case "$s" in
-    bold) codes+=('1') ;;
-    dim) codes+=('2') ;;
-    italic) codes+=('3') ;;
-    underline) codes+=('4') ;;
-    blink) codes+=('5') ;;
-    invert) codes+=('7') ;;
-    strikethrough) codes+=('9') ;;
-    red) codes+=('31') ;;
-    green) codes+=('32') ;;
-    yellow) codes+=('33') ;;
-    blue) codes+=('34') ;;
-    magenta) codes+=('35') ;;
-    cyan) codes+=('36') ;;
-    white) codes+=('37') ;;
-    bg_red) codes+=('41') ;;
-    bg_green) codes+=('42') ;;
-    bg_yellow) codes+=('43') ;;
-    bg_blue) codes+=('44') ;;
-    bg_magenta) codes+=('45') ;;
-    bg_cyan) codes+=('46') ;;
-    bg_white) codes+=('47') ;;
+  codes=""
+
+  for style in $styles; do
+    case "$style" in
+      bold) codes="${codes:+$codes;}1" ;;
+      dim) codes="${codes:+$codes;}2" ;;
+      italic) codes="${codes:+$codes;}3" ;;
+      underline) codes="${codes:+$codes;}4" ;;
+      blink) codes="${codes:+$codes;}5" ;;
+      invert) codes="${codes:+$codes;}7" ;;
+      strikethrough) codes="${codes:+$codes;}9" ;;
+      red) codes="${codes:+$codes;}31" ;;
+      green) codes="${codes:+$codes;}32" ;;
+      yellow) codes="${codes:+$codes;}33" ;;
+      blue) codes="${codes:+$codes;}34" ;;
+      magenta) codes="${codes:+$codes;}35" ;;
+      cyan) codes="${codes:+$codes;}36" ;;
+      white) codes="${codes:+$codes;}37" ;;
+      bg_red) codes="${codes:+$codes;}41" ;;
+      bg_green) codes="${codes:+$codes;}42" ;;
+      bg_yellow) codes="${codes:+$codes;}43" ;;
+      bg_blue) codes="${codes:+$codes;}44" ;;
+      bg_magenta) codes="${codes:+$codes;}45" ;;
+      bg_cyan) codes="${codes:+$codes;}46" ;;
+      bg_white) codes="${codes:+$codes;}47" ;;
     esac
   done
 
-  local joined_codes=$(IFS=';'; echo "${codes[*]:-}")
-
-  local line
-  while IFS= read -r line; do
-    printf '\033[%sm%s%b\n' "$joined_codes" "$line" "$RESET"
-  done <<<"$text"
+  printf '%s\n' "$text" | while IFS= read -r line; do
+    printf '\033[%sm%s%s\n' "$codes" "$line" "$RESET"
+  done
 }
 
 setup_color
