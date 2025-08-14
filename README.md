@@ -36,10 +36,9 @@ For more details on what is this script is, you can read [the blog post I wrote 
    - For example, the domain name you're using is `example.com`, run `./provision "example.com"`
    - See [Options](#options) for more details
 2) **Point Your DNS at the Route53 Name Servers**
-   - _Note: this needs to be done while the Cloudformation stack is being provisioned in order for the automatic TLS certificate validation to work_
-   1) Open up the AWS console and go to Route53
-   2) Find the Hosted Zone that has been created by the script, and find the `NS` type record in the hosted zone - these are your nameservers
-   3) Tell your domain registrar to use these name servers for your URL (this is usually done from within your domain registrar's portal)
+   - _Note: this needs to be done in order for the automatic TLS certificate validation to work. If your Domain is not pointed to the AWS nameservers, the deployment will hang for over an hour while it tries to validate domain ownership in order to issue the TLS certificate before it eventually gives up._
+   1) If you're creating a new Hosted Zone (and haven't passed in the `--hosted-zone-id` flag), the Nameservers will be output to the terminal before the main Cloudformation stack starts provisioning.
+   2) Tell your domain registrar to use these name servers for your URL (this is usually done from within your domain registrar's portal)
 3) **Wait for the script to finish (it might take a while).**
 
 

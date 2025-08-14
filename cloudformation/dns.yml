@@ -1,0 +1,29 @@
+Parameters:
+  RootDomainName:
+    Type: String
+    Description: The root domain name for our site, e.g. `example.com`
+  HostedZoneId:
+    Type: String
+    Description: The ID of an existing Route53 hosted zone to use instead of creating one
+    Default: ""
+
+Conditions:
+  CreateNewHostedZone: !Equals [!Ref HostedZoneId, ""]
+
+Resources:
+  SiteHostedZone:
+    Condition: CreateNewHostedZone
+    Type: "AWS::Route53::HostedZone"
+    Properties:
+      Name: !Ref RootDomainName
+
+Outputs:
+  HostedZoneId:
+    Description: The ID of the Route53 hosted zone that was created or used
+    Value: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneId"
+  NameServers:
+    Condition: CreateNewHostedZone
+    Description: DNS NameServers for the site
+    Value: !Join ["\n", !GetAtt SiteHostedZone.NameServers]

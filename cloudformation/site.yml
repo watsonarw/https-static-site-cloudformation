@@ -5,10 +5,9 @@ Parameters:
   BucketName:
     Type: String
     Description: The name for the S3 bucket
-  HostedZoneId:
+  HostedZoneIdImportName:
     Type: String
-    Description: The ID of an existing Route53 hosted zone to use instead of creating one
-    Default: ""
+    Description: Name of an exported Cloudformation output for the hosted zone ID
   Subdomain:
     Type: String
     Description: The subdomain for our site, e.g. "staging" for `staging.example.com`
@@ -29,7 +28,6 @@ Parameters:
     Default: "frame-ancestors 'self';"
 
 Conditions:
-  CreateNewHostedZone: !Equals [!Ref HostedZoneId, ""]
   HasSubdomain: !Not [!Equals [!Ref Subdomain, ""]]
   CreateWWWRecord: !Not [!Condition HasSubdomain]
   EnableSecurityHeaders: !Equals [!Ref EnableSecurityHeaders, "true"]
@@ -71,11 +69,11 @@ Resources:
       DomainValidationOptions: !If
         - HasSubdomain
         - - DomainName: !Sub "${Subdomain}.${RootDomainName}"
-            HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+            HostedZoneId: { Fn::ImportValue: !Ref HostedZoneIdImportName }
         - - DomainName: !Ref RootDomainName
-            HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+            HostedZoneId: { Fn::ImportValue: !Ref HostedZoneIdImportName }
           - DomainName: !Sub "www.${RootDomainName}"
-            HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+            HostedZoneId: { Fn::ImportValue: !Ref HostedZoneIdImportName }
 
   SiteOAC:
     Type: AWS::CloudFront::OriginAccessControl
@@ -203,16 +201,11 @@ Resources:
             - Header: "Cross-Origin-Opener-Policy"
               Value: "same-origin-allow-popups"
               Override: true
-  SiteHostedZone:
-    Condition: CreateNewHostedZone
-    Type: "AWS::Route53::HostedZone"
-    Properties:
-      Name: !Ref RootDomainName
 
   SiteARecord:
     Type: "AWS::Route53::RecordSet"
     Properties:
-      HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+      HostedZoneId: { Fn::ImportValue: !Ref HostedZoneIdImportName }
       Name: !If [HasSubdomain, !Sub "${Subdomain}.${RootDomainName}", !Ref RootDomainName]
       Type: A
       AliasTarget:
@@ -223,7 +216,7 @@ Resources:
     Condition: CreateWWWRecord
     Type: "AWS::Route53::RecordSet"
     Properties:
-      HostedZoneId: !If [CreateNewHostedZone, !Ref SiteHostedZone, !Ref HostedZoneId]
+      HostedZoneId: { Fn::ImportValue: !Ref HostedZoneIdImportName }
       Name: !Sub "www.${RootDomainName}"
       Type: CNAME
       TTL: 600
@@ -237,11 +230,10 @@ Outputs:
       - "https://${DomainName}/"
       - DomainName: !If [HasSubdomain, !Sub "${Subdomain}.${RootDomainName}", !Ref RootDomainName]
 
-  NameServers:
-    Condition: CreateNewHostedZone
-    Description: DNS NameServers for the site
-    Value: !Join [", ", !GetAtt SiteHostedZone.NameServers]
-
   CloudFrontDistributionId:
     Description: The CloudFront Distribution Id to be used for creating invalidations during deployment
     Value: !Ref SiteCDN
+
+  BucketName:
+    Description: The name of the S3 bucket hosting the site
+    Value: !Ref SiteS3Bucket
