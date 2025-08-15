@@ -119,7 +119,7 @@ fi
 
 # Set default values for optional arguments
 FULL_DOMAIN_NAME="${SUBDOMAIN:+${SUBDOMAIN}.}${ROOT_DOMAIN_NAME}"
-: "${STACK_NAME:=$(echo "$FULL_DOMAIN_NAME" | sed -E 's/[^a-zA-Z0-9\-]+/-/g')}"
+: "${STACK_NAME:=$(printf '%s' "$FULL_DOMAIN_NAME" | tr -s -c 'a-zA-Z0-9-' '-')}"
 : "${BUCKET_NAME:=$FULL_DOMAIN_NAME}"
 : "${ENABLE_CANONICAL_URIS:=true}"
 : "${ENABLE_SECURITY_HEADERS:=true}"
