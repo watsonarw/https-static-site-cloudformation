@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> **This project has evolved into [aws-cloudformation-quick-stacks](https://github.com/watsonarw/aws-cloudformation-quick-stacks), is now archived. It will not receive further updates.**
+>
+> The new repository contains an updated version of this `static-site` stack with all the functionality from this repository, plus additional features and more stacks, including `hosted-zone`, `oidc-provider`, and `deployment-role`.
+>
+> If you've used this Cloudformation template before and are happy with it, you can continue to use it until it stops being compatible with AWS or no longer meets your needs.
+>
+> If you're discovering this for the first time, see if [aws-cloudformation-quick-stacks](https://github.com/watsonarw/aws-cloudformation-quick-stacks) is a better fit for your needs.
+
 # https-static-site-cloudformation
 Cloudformation template for provisioning everything needed for a HTTPS static site
 
